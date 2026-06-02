@@ -1,0 +1,275 @@
+/* Variáveis de Cores - Dark Mode */
+:root {
+    --bg-dark: #121214;
+    --bg-card: #18181b;
+    --bg-input: #202024;
+    --text-primary: #e1e1e6;
+    --text-secondary: #a8a8b3;
+    --green: #04d361;
+    --green-medium: #0f6e3ac7;
+    --red: #f75a68;
+    --accent: #8257e5;
+    --border: #29292e;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif, system-ui;
+}
+
+body {
+    background-color: var(--bg-dark);
+    color: var(--text-primary);
+}
+
+.container {
+    width: 90%;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+header {
+    background-color: var(--bg-card);
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+main {
+    margin-top: 2.5rem;
+}
+
+/* Grid de Cards */
+.balance-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 2.5rem;
+}
+
+.card {
+    background-color: var(--bg-card);
+    padding: 1.5rem 2rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.card h3 {
+    font-size: 1rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.card p {
+    font-size: 2rem;
+    font-weight: 600;
+}
+
+.card.income p {
+    color: var(--green);
+}
+
+.card.expenses p {
+    color: var(--red);
+}
+
+.card.total {
+    background-color: var(--accent);
+    border: none;
+}
+
+/* Layout da Grid Inferior */
+.dashboard-content {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2.5rem;
+    margin-top: -1rem;
+}
+
+@media(max-width: 768px) {
+    .dashboard-content {
+        grid-template-columns: 1fr;
+    }
+}
+
+h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+/* Formulário */
+form {
+    background-color: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+}
+
+.input-group {
+    margin-bottom: 1rem;
+}
+
+label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+input, select {
+    width: 100%;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 0.8rem;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+input:focus, select:focus {
+    outline: 1px solid var(--accent);
+}
+
+/* Estrutura de colunas para alinhar Tipo e Categoria */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Customização dos Elementos Select para herdar design minimalista dark */
+#type, #category {
+    width: 100%; /* Corrigido de 90% para preencher 100% da coluna do grid */
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23a8a8b3' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.8rem center;
+    background-size: 1rem;
+    padding-right: 2rem;
+    cursor: pointer;
+}
+
+button {
+    width: 100%;
+    background-color: var(--green);
+    color: #fff;
+    border: none;
+    padding: 1rem;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.2s;
+}
+
+button:hover {
+    filter: brightness(0.9);
+}
+
+/* Tabela de Histórico */
+.table-container {
+    background-color: var(--bg-card);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    max-height: 265px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+th, td {
+    padding: 1rem 1.5rem;
+}
+
+th {
+    color: var(--text-secondary);
+    font-weight: 500;
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    background-color: var(--bg-card);
+    z-index: 1;
+}
+
+td {
+    color: var(--text-primary);
+}
+
+tr:not(:last-child) td {
+    border-bottom: 1px solid var(--border);
+}
+
+.value-income {
+    color: var(--green);
+}
+
+.value-expense {
+    color: var(--red);
+}
+
+.delete-btn {
+    background: transparent;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    font-weight: 500;
+    padding: 0;
+    width: auto;
+}
+
+/* Customização da Barra de Rolagem */
+.table-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.table-container::-webkit-scrollbar-track {
+    background: var(--bg-card);
+    border-radius: 0 8px 8px 0;
+}
+
+.table-container::-webkit-scrollbar-thumb {
+    background-color: var(--border);
+    border-radius: 4px;
+}
+
+.table-container::-webkit-scrollbar-thumb:hover {
+    background-color: var(--text-secondary);
+}
+
+#report-btn {
+    background-color: var(--green-medium);
+    margin-top: 0.75rem;
+}
+
+#print-section {
+    display: none;
+}
+
+@media print {
+    header, main {
+        display: none !important;
+    }
+
+    #print-section {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        background-color: #ffffff;
+        color: #2e2e2e;
+    }
+}

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance App | Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <h1>Minhas Finanças</h1>
+        </div>
+    </header>
+
+    <main class="container">
+        <section class="balance-cards">
+            <div class="card income">
+                <h3>Entradas</h3>
+                <p id="income-display">R$ 0,00</p>
+            </div>
+            <div class="card expenses">
+                <h3>Saídas</h3>
+                <p id="expense-display">R$ 0,00</p>
+            </div>
+            <div class="card total">
+                <h3>Saldo Atual</h3>
+                <p id="total-display">R$ 0,00</p>
+            </div>
+        </section>
+
+        <div class="dashboard-content">
+            <section class="form-section">
+                <h2>Nova Transação</h2>
+                <form id="transaction-form">
+                    <div class="input-group">
+                        <label for="description">Descrição</label>
+                        <input type="text" id="description" placeholder="Ex: Salário, Aluguel, Mercado" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label for="type">Tipo</label>
+                            <select id="type" required>
+                                <option value="income">Entrada (+)</option>
+                                <option value="expense">Saída (-)</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label for="category">Categoria</label>
+                            <select id="category" required>
+                                <option value="" disabled selected>Selecione</option>
+                                <option value="Alimentação">Alimentação</option>
+                                <option value="Automóvel">Automóvel</option>
+                                <option value="Moradia">Moradia</option>
+                                <option value="Transporte">Transporte</option>
+                                <option value="Lazer">Lazer</option>
+                                <option value="Saúde">Saúde</option>
+                                <option value="Investimentos">Investimentos</option>
+                                <option value="Salário">Salário</option>
+                                <option value="Outros">Outros</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="amount">Valor (R$)</label>
+                        <input type="number" step="0.01" min="0.01" id="amount" placeholder="Ex: 50.00" required>
+                    </div>
+                    <button type="submit">Adicionar</button>
+                    <button type="button" id="report-btn">Extrair Relatório</button>
+                </form>
+            </section>
+
+            <section class="history-section">
+                <h2>Histórico</h2>
+                <div class="table-container" style="margin-bottom: 2rem;">
+                    <table id="data-table">
+                        <thead>
+                            <tr>
+                                <th>Descrição</th>
+                                <th>Categoria</th>
+                                <th>Valor</th>
+                                <th>Ação</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transaction-list">
+                            </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <div id="print-section"></div>
+
+    <script>
+        // Captura de elementos da DOM
+        const balanceIncome = document.getElementById('income-display');
+        const balanceExpense = document.getElementById('expense-display');
+        const balanceTotal = document.getElementById('total-display');
+        const form = document.getElementById('transaction-form');
+        const descriptionInput = document.getElementById('description');
+        const typeInput = document.getElementById('type');
+        const categoryInput = document.getElementById('category');
+        const amountInput = document.getElementById('amount');
+        const transactionList = document.getElementById('transaction-list');
+
+        // Busca transações salvas ou inicia array vazio
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+
+        function updateLocalStorage() {
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+        }
+
+        function formatCurrency(value) {
+            return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        }
+
+        // Adiciona uma transação na tabela do painel
+        function addTransactionIntoDOM(transaction) {
+            const isExpense = transaction.amount < 0;
+            const CSSClass = isExpense ? 'value-expense' : 'value-income';
+            const amountFormatted = formatCurrency(Math.abs(transaction.amount));
+
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${transaction.description}</td>
+                <td><span style="background: var(--bg-input); padding: 4px 8px; border-radius: 4px; font-size: 0.85rem;">${transaction.category || 'Outros'}</span></td>
+                <td class="${CSSClass}">${isExpense ? '-' : ''} ${amountFormatted}</td>
+                <td>
+                    <button class="delete-btn" onclick="removeTransaction(${transaction.id})">Excluir</button>
+                </td>
+            `;
+            transactionList.appendChild(row);
+        }
+
+        function updateBalanceValues() {
+            const transactionAmounts = transactions.map(t => t.amount);
+
+            const income = transactionAmounts
+                .filter(value => value > 0)
+                .reduce((accumulator, value) => accumulator + value, 0);
+
+            const expense = transactionAmounts
+                .filter(value => value < 0)
+                .reduce((accumulator, value) => accumulator + value, 0);
+
+            const total = transactionAmounts.reduce((accumulator, value) => accumulator + value, 0);
+
+            balanceIncome.textContent = formatCurrency(income);
+            balanceExpense.textContent = formatCurrency(Math.abs(expense));
+            balanceTotal.textContent = formatCurrency(total);
+        }
+
+        window.removeTransaction = function (id) {
+            transactions = transactions.filter(t => t.id !== id);
+            updateLocalStorage();
+            init();
+        }
+
+        function init() {
+            transactionList.innerHTML = '';
+            transactions.forEach(addTransactionIntoDOM);
+            updateBalanceValues();
+        }
+
+        form.addEventListener('submit', event => {
+            event.preventDefault();
+
+            const desc = descriptionInput.value.trim();
+            const cat = categoryInput.value;
+            let value = parseFloat(amountInput.value);
+
+            if (typeInput.value === 'expense') {
+                value = -Math.abs(value);
+            } else {
+                value = Math.abs(value);
+            }
+
+            const transaction = {
+                id: Math.floor(Math.random() * 100000),
+                description: desc,
+                category: cat,
+                amount: value
+            };
+
+            transactions.push(transaction);
+            updateLocalStorage();
+            init();
+
+            descriptionInput.value = '';
+            categoryInput.value = '';
+            amountInput.value = '';
+        });
+
+        /* EXTRAIR RELATÓRIO COMPLETO PARA IMPRESSÃO (PDF) */
+        document.getElementById('report-btn').addEventListener('click', () => {
+            if (typeof transactions === 'undefined' || transactions.length === 0) {
+                alert('Adicione pelo menos uma transação para gerar o relatório.');
+                return;
+            }
+
+            const incomes = transactions.filter(t => t.amount > 0);
+            const expenses = transactions.filter(t => t.amount < 0);
+            const formatPdfCurrency = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+            const incomeRows = incomes.map(t => `
+                <tr>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #e1e1e6;">${t.description}</td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #e1e1e6; color: #666; font-size: 10pt;">${t.category || 'Outros'}</td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #e1e1e6; color: #04d361; text-align: right; font-weight: 500;">${formatPdfCurrency(t.amount)}</td>
+                </tr>
+            `).join('');
+
+            const expenseRows = expenses.map(t => `
+                <tr>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #e1e1e6;">${t.description}</td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #e1e1e6; color: #666; font-size: 10pt;">${t.category || 'Outros'}</td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #e1e1e6; color: #f75a68; text-align: right; font-weight: 500;">- ${formatPdfCurrency(Math.abs(t.amount))}</td>
+                </tr>
+            `).join('');
+
+            const categorySummaryMap = {};
+            transactions.forEach(t => {
+                const cat = t.category || 'Outros';
+                if (!categorySummaryMap[cat]) categorySummaryMap[cat] = 0;
+                categorySummaryMap[cat] += t.amount;
+            });
+
+            const categoryRows = Object.entries(categorySummaryMap).map(([cat, total]) => `
+                <tr>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #e1e1e6; font-weight: 500;">${cat}</td>
+                    <td style="padding: 10px 12px; border-bottom: 1px solid #e1e1e6; text-align: right; font-weight: bold; color: ${total >= 0 ? '#0f6e3a' : '#f75a68'};">
+                        ${total < 0 ? '-' : ''} ${formatPdfCurrency(Math.abs(total))}
+                    </td>
+                </tr>
+            `).join('');
+
+            const totalIncome = incomes.reduce((acc, t) => acc + t.amount, 0);
+            const totalExpense = expenses.reduce((acc, t) => acc + t.amount, 0);
+            const finalBalance = totalIncome + totalExpense;
+
+            const printSection = document.getElementById('print-section');
+
+            printSection.innerHTML = `
+                <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #2e2e2e; padding: 20mm 15mm; background-color: #ffffff;">
+                    <div style="border-bottom: 2px solid #0f6e3a; padding-bottom: 10px; margin-bottom: 25px;">
+                        <h1 style="font-size: 20pt; color: #0f6e3a; margin: 0 0 5px 0; font-weight: 700;">Relatório de Movimentação Financeira</h1>
+                        <p style="font-size: 10pt; color: #666; margin: 0;">Data do Relatório: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+                    </div>
+
+                    <div style="background-color: #f4f7f5; border-left: 4px solid #0f6e3a; padding: 15px; margin-bottom: 30px;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <tr>
+                                <td style="padding: 4px 0;"><strong>Total de Entradas:</strong></td>
+                                <td style="text-align: right; color: #0f6e3a; font-weight: bold;">${formatPdfCurrency(totalIncome)}</td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 4px 0;"><strong>Total de Saídas:</strong></td>
+                                <td style="text-align: right; color: #f75a68; font-weight: bold;">- ${formatPdfCurrency(Math.abs(totalExpense))}</td>
+                            </tr>
+                            <tr style="font-size: 12pt; border-top: 1px solid #ccc;">
+                                <td style="padding: 4px;"><strong>Saldo Consolidado:</strong></td>
+                                <td style="text-align: right; padding-top: 8px; color: ${finalBalance >= 0 ? '#0f6e3a' : '#f75a68'}; font-weight: bold;">
+                                    ${formatPdfCurrency(finalBalance)}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <div style="font-size: 13pt; color: #121214; margin: 25px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #e1e1e6; font-weight: 600;">1. Detalhamento de Entradas (Receitas)</div>
+                    ${incomes.length > 0 ? `
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px;">
+                            <thead>
+                                <tr style="background-color: #f8f9fa; color: #495057; font-weight: 600; text-align: left;">
+                                    <th style="padding: 10px 12px; font-size: 10pt; border-bottom: 2px solid #04d361;">Descrição</th>
+                                    <th style="padding: 10px 12px; font-size: 10pt; border-bottom: 2px solid #04d361;">Categoria</th>
+                                    <th style="padding: 10px 12px; font-size: 10pt; border-bottom: 2px solid #04d361; text-align: right;">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>${incomeRows}</tbody>
+                        </table>
+                    ` : `<p style="color: #888; font-style: italic; padding: 5px 12px; font-size: 10pt;">Nenhuma entrada registrada no período.</p>`}
+
+                    <div style="font-size: 13pt; color: #121214; margin: 25px 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #e1e1e6; font-weight: 600;">2. Detalhamento de Saídas (Despesas / Gastos)</div>
+                    ${expenses.length > 0 ? `
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 35px;">
+                            <thead>
+                                <tr style="background-color: #f8f9fa; color: #495057; font-weight: 600; text-align: left;">
+                                    <th style="padding: 10px 12px; font-size: 10pt; border-bottom: 2px solid #f75a68;">Descrição</th>
+                                    <th style="padding: 10px 12px; font-size: 10pt; border-bottom: 2px solid #f75a68;">Categoria</th>
+                                    <th style="padding: 10px 12px; font-size: 10pt; border-bottom: 2px solid #f75a68; text-align: right;">Valor</th>
+                                </tr>
+                            </thead>
+                            <tbody>${expenseRows}</tbody>
+                        </table>
+                    ` : `<p style="color: #888; font-style: italic; padding: 5px 12px; font-size: 10pt;">Nenhuma saída registrada no período.</p>`}
+
+                    <div style="page-break-before: always; font-size: 13pt; color: #121214; padding-top: 10mm; margin: 0 0 10px 0; padding-bottom: 5px; border-bottom: 1px solid #e1e1e6; font-weight: 600;">3. Resumo Consolidado por Categoria</div>
+                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 15px;">
+                        <thead>
+                            <tr style="background-color: #f8f9fa; color: #495057; font-weight: 600; text-align: left;">
+                                <th style="padding: 10px 12px; font-size: 10pt; border-bottom: 2px solid #6c757d;">Categoria</th>
+                                <th style="padding: 10px 12px; font-size: 10pt; border-bottom: 2px solid #6c757d; text-align: right;">Total Líquido</th>
+                            </tr>
+                        </thead>
+                        <tbody>${categoryRows}</tbody>
+                    </table>
+                </div>
+            `;
+
+            window.print();
+            printSection.innerHTML = '';
+        });
+        
+    </script>
+</body>
+</html>
